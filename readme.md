@@ -1,5 +1,11 @@
-### Trains And Towns
+# Trains And Towns
 ````
 go get github.com/akali/trainsAndTowns
-trainsAndTowns -input=[filename]
 ````
+
+## Usage
+```
+trainsAndTowns -file=[filename]
+    -file string
+        Input file
+```
