@@ -5,14 +5,14 @@ import (
 )
 
 type edgeT struct {
-	u rune
-	w int
+	U rune
+	W int
 }
 
 type graphT map[rune][]edgeT
 
 type Solution struct {
-	graph            graphT
+	Graph            graphT
 	matrix           map[rune]map[rune]int
 	shortestDistance map[rune]map[rune]int
 	calculated       bool
@@ -20,7 +20,7 @@ type Solution struct {
 
 func NewSolution() *Solution {
 	return &Solution{
-		graph:            make(graphT),
+		Graph:            make(graphT),
 		matrix:           make(map[rune]map[rune]int),
 		shortestDistance: make(map[rune]map[rune]int),
 		calculated:       false,
@@ -28,7 +28,7 @@ func NewSolution() *Solution {
 }
 
 func (s *Solution) AddEdge(v rune, u rune, w int) {
-	s.graph[v] = append(s.graph[v], edgeT{u, w})
+	s.Graph[v] = append(s.Graph[v], edgeT{u, w})
 	if s.matrix[v] == nil {
 		s.matrix[v] = make(map[rune]int)
 	}
@@ -60,8 +60,8 @@ func (s *Solution) RouteDistance(route string) (int, error) {
 	return result, nil
 }
 
-func (s *Solution) calcShortestDistance() {
-	vertices := make(map[rune]bool)
+func (s *Solution) constructVertices() (vertices map[rune]bool) {
+	vertices = make(map[rune]bool)
 	for from, val := range s.matrix {
 		vertices[from] = true
 		if s.shortestDistance[from] == nil {
@@ -72,6 +72,11 @@ func (s *Solution) calcShortestDistance() {
 			s.shortestDistance[from][to] = w
 		}
 	}
+	return vertices
+}
+
+func (s *Solution) calcShortestDistance() {
+	vertices := s.constructVertices()
 
 	for k := range vertices {
 		if s.shortestDistance[k] == nil {
@@ -127,9 +132,9 @@ func (s *Solution) routesLessDistanceNumber(v rune, to rune, dist int) (int, err
 		result += 1
 		found = true
 	}
-	for _, edge := range s.graph[v] {
-		u, w := edge.u, edge.w
-		if val, err := s.routesLessDistanceNumber(u, to, dist - w); err == nil {
+	for _, edge := range s.Graph[v] {
+		u, w := edge.U, edge.W
+		if val, err := s.routesLessDistanceNumber(u, to, dist-w); err == nil {
 			result += val
 			found = true
 		}
@@ -152,60 +157,75 @@ func (s *Solution) RoutesLessDistanceNumber(v rune, to rune, dist int) (int, err
 }
 
 func (s *Solution) RoutesLessStopsNumber(v rune, to rune, stops int) (int, error) {
-	if val, err := s.routesLessStopsNumber(v, to, stops); err == nil {
-		if v == to {
-			val--
-		}
-		return val, nil
-	} else {
-		return 0, err
-	}
-}
+	var d = make([][]int, stops+1)
+	vertices := s.constructVertices()
 
-func (s *Solution) routesLessStopsNumber(v rune, to rune, stops int) (int, error) {
-	if stops < 0 {
-		return 0, fmt.Errorf("NO SUCH ROUTE")
-	}
-	result := 0
-	found := false
-	if v == to {
-		result += 1
-		found = true
-	}
-	for _, edge := range s.graph[v] {
-		u := edge.u
-		if val, err := s.routesLessStopsNumber(u, to, stops - 1); err == nil {
-			result += val
-			found = true
+	maxElement := 'A'
+
+	for k := range vertices {
+		if maxElement < k {
+			maxElement = k
 		}
 	}
-	if !found {
-		return 0, fmt.Errorf("NO SUCH ROUTE")
+
+	for i := 0; i <= stops; i++ {
+		d[i] = make([]int, maxElement+1)
 	}
-	return result, nil
+
+	d[0][v] = 1
+
+	for i := 1; i <= stops; i++ {
+		for v := range vertices {
+			for _, e := range s.Graph[v] {
+				u := e.U
+				d[i][u] += d[i-1][v]
+			}
+		}
+	}
+
+	result := 0
+
+	for i := 1; i <= stops; i++ {
+		result += d[i][to]
+	}
+
+	if result == 0 {
+		return 0, fmt.Errorf("NO SUCH ROUTE")
+	} else {
+		return result, nil
+	}
 }
 
 func (s *Solution) RoutesExactStopsNumber(v rune, to rune, stops int) (int, error) {
-	if stops < 0 {
-		return 0, fmt.Errorf("NO SUCH ROUTE")
-	}
-	result := 0
-	found := false
-	if v == to {
-		if stops == 0 {
-			result += 1
-		}
-		found = true
-	}
-	for _, edge := range s.graph[v] {
-		u := edge.u
-		if val, err := s.RoutesExactStopsNumber(u, to, stops - 1); err == nil {
-			result += val
-			found = true
+	var d = make([][]int, stops+1)
+	vertices := s.constructVertices()
+
+	maxElement := 'A'
+
+	for k := range vertices {
+		if maxElement < k {
+			maxElement = k
 		}
 	}
-	if !found {
-		return 0, fmt.Errorf("NO SUCH ROUTE")
+
+	for i := 0; i <= stops; i++ {
+		d[i] = make([]int, maxElement+1)
 	}
-	return result, nil
+
+	d[0][v] = 1
+
+	for i := 1; i <= stops; i++ {
+		for v := range vertices {
+			for _, e := range s.Graph[v] {
+				u := e.U
+				d[i][u] += d[i-1][v]
+			}
+		}
+	}
+
+	if d[stops][to] == 0 {
+		return 0, fmt.Errorf("NO SUCH ROUTE")
+	} else {
+		return d[stops][to], nil
+	}
 }
