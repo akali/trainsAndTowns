@@ -2,6 +2,7 @@ package solution
 
 import (
 	"fmt"
+	"strconv"
 )
 
 type edgeT struct {
@@ -15,6 +16,7 @@ type Solution struct {
 	Graph            graphT
 	matrix           map[rune]map[rune]int
 	shortestDistance map[rune]map[rune]int
+	parent           map[rune]map[rune]rune
 	calculated       bool
 }
 
@@ -23,6 +25,7 @@ func NewSolution() *Solution {
 		Graph:            make(graphT),
 		matrix:           make(map[rune]map[rune]int),
 		shortestDistance: make(map[rune]map[rune]int),
+		parent:           make(map[rune]map[rune]rune),
 		calculated:       false,
 	}
 }
@@ -67,6 +70,9 @@ func (s *Solution) constructVertices() (vertices map[rune]bool) {
 		if s.shortestDistance[from] == nil {
 			s.shortestDistance[from] = make(map[rune]int)
 		}
+		if s.parent[from] == nil {
+			s.parent[from] = make(map[rune]rune)
+		}
 		for to, w := range val {
 			vertices[to] = true
 			s.shortestDistance[from][to] = w
@@ -96,29 +102,109 @@ func (s *Solution) calcShortestDistance() {
 				} else {
 					continue
 				}
-				if val, ok := s.shortestDistance[i][j]; ok {
-					if val < w {
-						w = val
-					}
-				}
+				//if val, ok := s.shortestDistance[i][j]; ok {
+				//	if val < w {
+				//		w = val
+				//	}
+				//}
 
-				s.shortestDistance[i][j] = w
+				if val, ok := s.shortestDistance[i][j]; ok {
+					if w < val {
+						s.parent[i][j] = k
+						s.shortestDistance[i][j] = w
+					}
+				} else {
+					s.shortestDistance[i][j] = w
+					s.parent[i][j] = k
+				}
 			}
 		}
 	}
 	s.calculated = true
 }
 
-func (s *Solution) ShortestDistance(v rune, u rune) (int, error) {
+type Path struct {
+	Path     []rune
+	Distance int
+}
+
+func PrintView(p interface{}) string {
+	path := p.(*Path)
+	result := ""
+	result += strconv.Itoa(path.Distance) + " "
+	for _, k := range path.Path {
+		result += string(k)
+	}
+	return result
+}
+
+func (s *Solution) ShortestDistance(v rune, u rune) (*Path, error) {
 	if !s.calculated {
 		s.calcShortestDistance()
 	}
 	if s.shortestDistance[v] == nil {
-		return 0, fmt.Errorf("NO SUCH ROUTE")
+		return nil, fmt.Errorf("NO SUCH ROUTE")
 	} else if val, ok := s.shortestDistance[v][u]; !ok {
-		return 0, fmt.Errorf("NO SUCH ROUTE")
+		return nil, fmt.Errorf("NO SUCH ROUTE")
 	} else {
-		return val, nil
+		return &Path{
+			Path:     s.shortestDistancePath(v, u),
+			Distance: val,
+		}, nil
+	}
+}
+
+func (s *Solution) shortestDistancePath(v rune, u rune) []rune {
+	k := s.parent[v][u]
+
+	if v == k {
+		return []rune{v, u}
+	}
+
+	if u == k {
+		return []rune{v, u}
+	}
+
+	var start []rune
+	var end []rune
+
+	if v == k {
+		start = []rune{k, u}
+	} else {
+		start = s.shortestDistancePath(v, k)
+	}
+
+	if u == k {
+		end = []rune{v, k}
+	} else {
+		end = s.shortestDistancePath(k, u)
+	}
+	var result []rune
+
+	for i, v := range start {
+		if i+1 < len(start) {
+			result = append(result, v)
+		}
+	}
+	for _, v := range end {
+		result = append(result, v)
+	}
+	return result
+}
+
+func (s *Solution) ShortestDistancePath(v rune, u rune) ([]rune, error) {
+	if v == u {
+		return []rune{v}, nil
+	}
+	if !s.calculated {
+		s.calcShortestDistance()
+	}
+	if s.shortestDistance[v] == nil {
+		return []rune{}, fmt.Errorf("NO SUCH ROUTE")
+	} else if _, ok := s.shortestDistance[v][u]; !ok {
+		return []rune{}, fmt.Errorf("NO SUCH ROUTE")
+	} else {
+		return s.shortestDistancePath(v, u), nil
 	}
 }
 

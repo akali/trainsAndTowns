@@ -60,12 +60,12 @@ func Run(reader *bufio.Reader) error {
 	cnt++
 
 	for _, route := range []string{"AC", "BB"} {
-		if distance, err := s.ShortestDistance(rune(route[0]), rune(route[1])); err != nil {
-			result = err
+		if path, err := s.ShortestDistance(rune(route[0]), rune(route[1])); err != nil {
+			fmt.Printf("Output #%d: %v\n", cnt, result)
 		} else {
-			result = distance
+			result = path
+			fmt.Printf("Output #%d: %v\n", cnt, solution.PrintView(result))
 		}
-		fmt.Printf("Output #%d: %v\n", cnt, result)
 		cnt++
 	}
 
