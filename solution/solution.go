@@ -102,11 +102,6 @@ func (s *Solution) calcShortestDistance() {
 				} else {
 					continue
 				}
-				//if val, ok := s.shortestDistance[i][j]; ok {
-				//	if val < w {
-				//		w = val
-				//	}
-				//}
 
 				if val, ok := s.shortestDistance[i][j]; ok {
 					if w < val {
@@ -165,20 +160,9 @@ func (s *Solution) shortestDistancePath(v rune, u rune) []rune {
 		return []rune{v, u}
 	}
 
-	var start []rune
-	var end []rune
+	start := s.shortestDistancePath(v, k)
+	end := s.shortestDistancePath(k, u)
 
-	if v == k {
-		start = []rune{k, u}
-	} else {
-		start = s.shortestDistancePath(v, k)
-	}
-
-	if u == k {
-		end = []rune{v, k}
-	} else {
-		end = s.shortestDistancePath(k, u)
-	}
 	var result []rune
 
 	for i, v := range start {
